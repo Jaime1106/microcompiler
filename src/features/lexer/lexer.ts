@@ -18,7 +18,7 @@ export interface Token {
   position: number;
 }
 
-const keywords = ["if", "then", "end-if", "write", "capture"];
+const keywords = ["if", "then", "end-if", "write", "capture", "while", "end-while"];
 const logicOps = ["and", "or", "not"];
 const relOps = ["<", ">", "<=", ">=", "<>", "="];
 const arithOps = ["+", "-", "*", "/"];

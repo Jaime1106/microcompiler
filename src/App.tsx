@@ -3,17 +3,23 @@ import Toolbar from "./components/Toolbar";
 import CodeEditor from "./components/CodeEditor";
 import ConsoleOutput from "./components/ConsoleOutput";
 import InstallerSection from "./components/InstallerSection";
+import ExecutionControls from "./components/ExecutionControls";
 import { tokenize } from "./features/lexer/lexer";
 import { parse } from "./features/parser/parser";
+import { buildAST, executeStep, ExecutionState } from "./features/executor/executor";
 import "./styles/global.css";
 
 function App() {
   const [code, setCode] = useState("// Escribe tu código aquí...");
   const [output, setOutput] = useState("💬 Esperando compilación...");
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionState, setExecutionState] = useState<ExecutionState | null>(null);
+  const [ast, setAst] = useState<any[]>([]);
 
   const handleNew = () => {
     setCode("// Escribe tu código aquí...");
     setOutput("💬 Nuevo archivo creado.");
+    setIsExecuting(false);
   };
 
   const handleOpen = () => {
@@ -46,6 +52,7 @@ function App() {
   const handleClear = () => {
     setCode("// Escribe tu código aquí...");
     setOutput("🧹 Editor limpio.");
+    setIsExecuting(false);
   };
 
   const handleTokens = () => {
@@ -66,6 +73,59 @@ function App() {
     }
   };
 
+  const handleExecute = () => {
+    setIsExecuting(true);
+    setOutput("🚀 Iniciando ejecución...");
+    
+    const tokens = tokenize(code);
+    const parseResult = parse(tokens);
+    
+    if (!parseResult.success) {
+      setOutput("❌ Errores encontrados:\n\n" + parseResult.errors.join("\n"));
+      setIsExecuting(false);
+      return;
+    }
+    
+    const newAST = buildAST(tokens);
+    setAst(newAST);
+    
+    const initialState: ExecutionState = {
+      pc: 0,
+      variables: {},
+      output: "",
+      callStack: []
+    };
+    
+    setExecutionState(initialState);
+    setOutput("✅ Compilación exitosa\n🚀 Preparado para ejecución paso a paso");
+  };
+
+  const handleNextStep = () => {
+    if (!executionState || !ast) return;
+    
+    const result = executeStep(executionState, ast);
+    setExecutionState(result.newState);
+    setOutput(prev => prev + "\n" + result.output);
+    
+    if (result.finished) {
+      setIsExecuting(false);
+      setOutput(prev => prev + "\n✅ Ejecución completada");
+    }
+  };
+
+  const handleStopExecution = () => {
+    setIsExecuting(false);
+    setOutput(prev => prev + "\n⏹ Ejecución detenida por el usuario");
+  };
+
+  const handleShowUserManual = () => {
+    window.open('/downloads/Manual_Usuario_MicroCompilador.pdf', '_blank');
+  };
+
+  const handleShowProgrammerManual = () => {
+    window.open('/downloads/Manual_Programador_MicroCompilador.pdf', '_blank');
+  };
+
   return (
     <div className="container py-4">
       <h1 className="text-center mb-4">💻 Micro-Compilador Web</h1>
@@ -77,6 +137,15 @@ function App() {
         onClear={handleClear}
         onTokens={handleTokens}
         onCompile={handleCompile}
+        onExecute={handleExecute}
+        onShowUserManual={handleShowUserManual}
+        onShowProgrammerManual={handleShowProgrammerManual}
+      />
+
+      <ExecutionControls 
+        isExecuting={isExecuting}
+        onNextStep={handleNextStep}
+        onStop={handleStopExecution}
       />
 
       <InstallerSection />

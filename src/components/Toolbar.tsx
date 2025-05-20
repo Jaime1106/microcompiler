@@ -7,10 +7,14 @@ interface ToolbarProps {
   onClear: () => void;
   onTokens: () => void;
   onCompile: () => void;
+  onExecute: () => void;
+  onShowUserManual: () => void;
+  onShowProgrammerManual: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
-  onNew, onOpen, onSave, onClear, onTokens, onCompile
+  onNew, onOpen, onSave, onClear, onTokens, onCompile, onExecute,
+  onShowUserManual, onShowProgrammerManual
 }) => {
   return (
     <div className="mb-3 d-flex gap-2 flex-wrap">
@@ -31,6 +35,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </button>
       <button className="btn btn-primary" onClick={onCompile}>
         <i className="bi bi-play-circle"></i> Compilar
+      </button>
+      <button className="btn btn-success" onClick={onExecute}>
+        <i className="bi bi-play-fill"></i> Ejecutar
+      </button>
+      
+      <button className="btn btn-info" onClick={onShowUserManual}>
+        <i className="bi bi-person-video2 me-1"></i> Manual Usuario
+      </button>
+      <button className="btn btn-secondary" onClick={onShowProgrammerManual}>
+        <i className="bi bi-code-slash me-1"></i> Manual Programador
       </button>
     </div>
   );

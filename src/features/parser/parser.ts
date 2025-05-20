@@ -57,9 +57,44 @@ export function parse(tokens: Token[]): ParseResult {
       if (!expect("KEYWORD", "then")) continue;
       stack.push("if");
 
+    } else if (token.type === "KEYWORD" && token.value === "while") {
+      if (!expect("PAREN", "(")) continue;
+
+      let openParens = 1;
+      while (peek() && openParens > 0) {
+        const current = peek();
+        if (current.type === "PAREN") {
+          if (current.value === "(") openParens++;
+          if (current.value === ")") openParens--;
+          next();
+        } else if (
+          current.type === "NUMBER" ||
+          current.type === "IDENTIFIER" ||
+          current.type === "REL_OPERATOR" ||
+          current.type === "LOGIC_OPERATOR"
+        ) {
+          next();
+        } else {
+          errors.push(`Token inesperado en condición while: ${current.value}`);
+          next();
+        }
+      }
+
+      if (openParens !== 0) {
+        errors.push("Condición del while mal formada: paréntesis no balanceados");
+        continue;
+      }
+
+      stack.push("while");
+
     } else if (token.type === "KEYWORD" && token.value === "end-if") {
       if (stack.length === 0 || stack.pop() !== "if") {
         errors.push("end-if sin if correspondiente");
+      }
+
+    } else if (token.type === "KEYWORD" && token.value === "end-while") {
+      if (stack.length === 0 || stack.pop() !== "while") {
+        errors.push("end-while sin while correspondiente");
       }
 
     } else if (token.type === "KEYWORD" && token.value === "write") {
@@ -142,7 +177,8 @@ export function parse(tokens: Token[]): ParseResult {
   }
 
   if (stack.length > 0) {
-    errors.push("Falta cerrar un bloque if con end-if");
+    const unclosedBlock = stack[stack.length - 1];
+    errors.push(`Falta cerrar un bloque ${unclosedBlock} con end-${unclosedBlock}`);
   }
 
   return {
